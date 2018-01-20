@@ -13,7 +13,18 @@ using namespace std;
 #include "ThreadLoop.h"
 #include "UserInterface.h"
 #include <json/json.h>
+#include <map>
 
+map<string, int> user_fd_map;
+
+void accept_cb(UserInterface *interface)
+{
+    TcpConnection *conn = interface->getConnection();
+    int cli_fd = interface->getFileDescriptor();
+    interface->recv();
+    string user_name = conn->getValueAsString("username");
+    user_fd_map[user_name] = cli_fd;
+}
 void read_cb(UserInterface *interface)
 {
     //cout << "read_cb" << endl;
@@ -23,9 +34,13 @@ void read_cb(UserInterface *interface)
         interface->close();
         return;
     }
-    string user_name = conn->getValueAsString("name");
+    string to_name = conn->getValueAsString("Toname");
+    string my_name = conn->getValueAsString("Myname");
+    string mess = conn->getValueAsString("mess");
     Json::Value val;
-    val["message"] = "Hello";
+    val["Toname"] = my_name;
+    val["Myname"] = to_name;
+    val["message"] = mess;
     interface->writeEvent(val);
     //cout << "read_cb end" << endl;
     //TcpConnection *conn = interface->getConnection();
@@ -33,12 +48,17 @@ void read_cb(UserInterface *interface)
 void write_cb(UserInterface *interface)
 {
     //cout << "write_cb" << endl;
-    interface->send();
+    TcpConnection *conn = interface->getConnection();
+    string my_name = conn->getValueAsString("Myname");
+    map<string, int>::iterator it = user_fd_map.find(my_name);
+    TcpConnection connect(it->second);
+    connect.send(conn->getValue());
 }
 
 int main()
 {
     TcpServer server(1219, 2);
+    server.addAcceptCallBack(accept_cb);
     server.addReadCallBack(read_cb);
     server.addWriteCallBack(write_cb);
     server.serverInit();

@@ -12,7 +12,7 @@
 #include <unistd.h>
 using Json::Reader;
 
-string TcpConnection::getValueAsString(string key)
+string TcpConnection::getValueAsString(const string &key)
 {
     if(_val[key].isString())
     {
@@ -24,7 +24,7 @@ string TcpConnection::getValueAsString(string key)
     }
 }
 
-int TcpConnection::getValueAsInt(string key)
+int TcpConnection::getValueAsInt(const string &key)
 {
     if(_val[key].isInt())
     {

@@ -20,12 +20,12 @@ public:
     int getConnfd() { return conn_fd; }
 
     Value& getValue() { return _val; }
-    string getValueAsString(string key);
-    int getValueAsInt(string key);
-    void setValue(Value val) { _val = val; }
-    bool isString(string key) { return _val[key].isString(); }
-    bool isNull(string key) { return _val[key].isNull(); }
-    bool isInt(string key) { return _val[key].isInt(); }
+    string getValueAsString(const string &key);
+    int getValueAsInt(const string &key);
+    void setValue(const Value &val) { _val = val; }
+    bool isString(const string &key) { return _val[key].isString(); }
+    bool isNull(const string &key) { return _val[key].isNull(); }
+    bool isInt(const string &key) { return _val[key].isInt(); }
 
     void send();
     void send(Value &buf);

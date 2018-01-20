@@ -6,6 +6,7 @@
  ************************************************************************/
 
 #include "TcpServer.h"
+#include "UserInterface.h"
 
 static void change_map(evutil_socket_t fd, short event, void *arg)
 {
@@ -35,6 +36,10 @@ static void accept_cb(evutil_socket_t fd, short event, void *arg)
     bzero(&cliadd, sizeof(cliadd));
     int cli_fd = accept(fd, (struct sockaddr*)&cliadd, &len);
     //cout << "accept is over" << endl;
+    TcpServer::ser_cb acc_cb = thiz->getAcceptCallBack();
+    TcpConnection conn(cli_fd);
+    UserInterface interface(&conn);
+    acc_cb(&interface);
 
     char tmp[16] = {0};
     sprintf(tmp, "%d", cli_fd);

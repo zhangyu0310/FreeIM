@@ -47,8 +47,10 @@ public:
         threads_pair = new int[thread_num];
     }
     //~TcpServer();
+    void addAcceptCallBack(ser_cb cb) { acc_cb = cb; }
     void addReadCallBack(ser_cb cb) { read_cb = cb; }
     void addWriteCallBack(ser_cb cb) { write_cb = cb; }
+    ser_cb getAcceptCallBack() { return acc_cb; }
     struct event_base* getBase() { return _base; }
     map<int, int>* getMap() { return &load_map; }
     int serverInit();
@@ -59,6 +61,7 @@ private:
     int thread_num;
     int _sockfd;
     struct event_base *_base;
+    ser_cb acc_cb;
     ser_cb read_cb;
     ser_cb write_cb;
     int *self_pair;
