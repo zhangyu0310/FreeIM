@@ -22,7 +22,7 @@ static void listen_cb(int fd, short event, void *arg)
     char tmp[16] = {0};
     recv(fd, tmp, 16, 0);
     int cli_fd = atoi(tmp);
-    TcpConnection *cli_conn = new TcpConnection(cli_fd);
+    TcpConnection *cli_conn = new TcpConnection(cli_fd, thiz);
     ThreadLoop::event_callback close_cb = thiz->getCloseCallBack();
     if(close_cb != NULL)
     {
@@ -66,14 +66,20 @@ static void message_func(int fd, short event, void *arg)
     if(connection->recv() <= 0)
     {
         connection->close();
-        thiz->delConntion(fd);
-        thiz->loadMinus();
+        delete connection;
     }
     else
     {
         message_cb(connection);
-        struct event *event_again = event_new(base, fd, event, message_func, arg);
-        event_add(event_again, NULL);
+        if(connection->isClosed())
+        {
+            delete connection;
+        }
+        else
+        {
+            struct event *event_again = event_new(base, fd, event, message_func, arg);
+            event_add(event_again, NULL);
+        }
     }
 }
 

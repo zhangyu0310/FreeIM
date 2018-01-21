@@ -6,6 +6,7 @@
  ************************************************************************/
 
 #include "TcpConnection.h"
+#include "ThreadLoop.h"
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -37,9 +38,14 @@ int TcpConnection::recv()
 
 void TcpConnection::close()
 {
+    _closed = true;
+    if(_loop == NULL) return;
+
     if(close_cb != NULL)
     {
         close_cb(this);
     }
+    _loop->delConntion(conn_fd);
+    _loop->loadMinus();
     ::close(conn_fd);
 }

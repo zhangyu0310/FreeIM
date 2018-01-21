@@ -38,7 +38,6 @@ public:
     TcpConnection* getConntion(int fd) { return _connection[fd]; }
     void delConntion(int fd) 
     {
-        delete _connection[fd];
         _connection.erase(fd);
     }
     map<int, TcpConnection*>* getConntionMap() { return &_connection; }

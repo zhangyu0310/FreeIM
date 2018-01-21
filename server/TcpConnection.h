@@ -9,11 +9,14 @@
 #define _TCPCONNECTION_H
 #include "Buffer.h"
 
+class ThreadLoop;
 class TcpConnection
 {
 public:
     typedef void(*event_callback)(TcpConnection*);
-    TcpConnection(int sockfd) : conn_fd(sockfd), close_cb(NULL) {}
+    TcpConnection(int sockfd) : _closed(false), conn_fd(sockfd), _loop(NULL), close_cb(NULL) {}
+    TcpConnection(int sockfd, ThreadLoop *loop) : _closed(false), conn_fd(sockfd),
+                                            _loop(loop), close_cb(NULL) {}
     //~TcpConnection();
     int getConnfd() { return conn_fd; }
     void addCloseCallBack(event_callback cb) { close_cb = cb; }
@@ -29,8 +32,12 @@ public:
     }
     int recv();
     void close();
+
+    bool isClosed() { return _closed == 1; }
 private:
+    bool _closed;
     int conn_fd;
+    ThreadLoop *_loop;
     event_callback close_cb;
     Buffer _input;
     Buffer _output;
