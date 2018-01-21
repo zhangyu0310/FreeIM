@@ -13,14 +13,12 @@
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
-//#include <iostream>
+
 #include <map>
 #include <vector>
 #include "ThreadLoop.h"
-#include "UserInterface.h"
-//using std::cout;
-//using std::cin;
-//using std::endl;
+#include "TcpConnection.h"
+
 using std::map;
 using std::vector;
 
@@ -37,20 +35,23 @@ using std::vector;
 class TcpServer
 {
 public:
-    typedef void(*event_callback)(evutil_socket_t, short, void*);
-    typedef void(*ser_cb)(UserInterface*);
+    typedef void(*event_callback)(TcpConnection*);
 public:
     TcpServer(int port, int threads) : _port(port), thread_num(threads), _sockfd(0),
-                                    _base(NULL), read_cb(NULL), write_cb(NULL)
+                                    _base(NULL), accept_cb(NULL), message_cb(NULL), close_cb(NULL)
     {
         self_pair = new int[thread_num];
         threads_pair = new int[thread_num];
     }
-    //~TcpServer();
-    void addAcceptCallBack(ser_cb cb) { acc_cb = cb; }
-    void addReadCallBack(ser_cb cb) { read_cb = cb; }
-    void addWriteCallBack(ser_cb cb) { write_cb = cb; }
-    ser_cb getAcceptCallBack() { return acc_cb; }
+    ~TcpServer()
+    {
+        delete[] self_pair;
+        delete[] threads_pair;
+    }
+    void addAcceptCallBack(event_callback cb) { accept_cb = cb; }
+    void addMessageCallBack(event_callback cb) { message_cb = cb; }
+    void addCloseCallBack(event_callback cb) { close_cb = cb; }
+    //event_callback getAcceptCallBack() { return accept_cb; }
     struct event_base* getBase() { return _base; }
     map<int, int>* getMap() { return &load_map; }
     int serverInit();
@@ -61,15 +62,12 @@ private:
     int thread_num;
     int _sockfd;
     struct event_base *_base;
-    ser_cb acc_cb;
-    ser_cb read_cb;
-    ser_cb write_cb;
+    event_callback accept_cb;
+    event_callback message_cb;
+    event_callback close_cb;
     int *self_pair;
     int *threads_pair;
     map<int, int> load_map;
     vector<ThreadLoop*> _threads;
-
-    //static void change_map(evutil_socket_t fd, short event, void *arg);
-    //static void accept_cb(evutil_socket_t fd, short event, void *arg);
 };
 #endif

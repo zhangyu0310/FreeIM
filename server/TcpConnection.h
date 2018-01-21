@@ -7,32 +7,32 @@
 
 #ifndef _TCPCONNECTION_H
 #define _TCPCONNECTION_H
-#include <json/json.h>
-#include <string>
-using std::string;
-using Json::Value;
+#include "Buffer.h"
 
 class TcpConnection
 {
 public:
-    TcpConnection(int sockfd) : conn_fd(sockfd) {}
+    typedef void(*event_callback)(TcpConnection*);
+    TcpConnection(int sockfd) : conn_fd(sockfd), close_cb(NULL) {}
     //~TcpConnection();
     int getConnfd() { return conn_fd; }
+    void addCloseCallBack(event_callback cb) { close_cb = cb; }
 
-    Value& getValue() { return _val; }
-    string getValueAsString(const string &key);
-    int getValueAsInt(const string &key);
-    void setValue(const Value &val) { _val = val; }
-    bool isString(const string &key) { return _val[key].isString(); }
-    bool isNull(const string &key) { return _val[key].isNull(); }
-    bool isInt(const string &key) { return _val[key].isInt(); }
+    string getMessageAsString() { return _input.getMessageAsString(); }
+    void setMessage(string message) { _output.setMessage(message); }
 
     void send();
-    void send(Value &buf);
+    void send(string message)
+    {
+        this->setMessage(message);
+        this->send();
+    }
     int recv();
     void close();
 private:
     int conn_fd;
-    Value _val;
+    event_callback close_cb;
+    Buffer _input;
+    Buffer _output;
 };
 #endif

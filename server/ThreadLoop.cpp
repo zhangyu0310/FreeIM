@@ -11,25 +11,30 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-//#include <iostream>
-//using namespace std;
-
-static void read_func(int fd, short event, void *arg);
-static void write_func(int fd, short event, void *arg);
+static void message_func(int fd, short event, void *arg);
 static void listen_cb(int fd, short event, void *arg)
 {
     ThreadLoop *thiz = (ThreadLoop*)arg;
     thiz->loadPlus();
-    map<int, TcpConnection*> *conn = thiz->getConntion();
+
+    //能否修改这部分
+    map<int, TcpConnection*> *conn = thiz->getConntionMap();
     char tmp[16] = {0};
     recv(fd, tmp, 16, 0);
     int cli_fd = atoi(tmp);
     TcpConnection *cli_conn = new TcpConnection(cli_fd);
+    ThreadLoop::event_callback close_cb = thiz->getCloseCallBack();
+    if(close_cb != NULL)
+    {
+        cli_conn->addCloseCallBack(close_cb);
+    }
     (*conn)[cli_fd] = cli_conn;
+    ThreadLoop::event_callback accept_cb = thiz->getAcceptCallBack();
+    accept_cb(cli_conn);
 
     struct event *cli_event = event_new(thiz->getBase(),
                                         cli_fd, EV_READ,
-                                        read_func, arg);
+                                        message_func, arg);
     event_add(cli_event, NULL);
     bzero(&tmp, sizeof(tmp));
     sprintf(tmp, "%d", thiz->getLoad());
@@ -48,53 +53,27 @@ static void* thread_func(void *arg)
     event_base_dispatch(thiz->getBase());
 }
 
-static void read_func(int fd, short event, void *arg)
+static void message_func(int fd, short event, void *arg)
 {
     //cout << "in read_func" << endl;
     ThreadLoop *thiz = (ThreadLoop*)arg;
-    ThreadLoop::ser_cb read_cb = thiz->getReadCallBack();
+    ThreadLoop::event_callback message_cb = thiz->getMessageCallBack();
     event_base *base = thiz->getBase();
-    map<int, TcpConnection*> *conn = thiz->getConntion();
-    TcpConnection *connection = (*conn)[fd];
-    UserInterface interface(connection);
-    read_cb(&interface);
 
-    if(interface.haveWriteEvent())
+    //修改
+    //map<int, TcpConnection*> *conn = thiz->getConntionMap();
+    TcpConnection *connection = thiz->getConntion(fd);
+    if(connection->recv() <= 0)
     {
-        //printf("add Write Event\n");
-        struct event *write_event = event_new(base, fd, EV_WRITE, write_func, arg);
-        event_add(write_event, NULL);
-    }
-    if(interface.getRet() == INTER_OK)
-    {
-        struct event *event_again = event_new(base, fd, event, read_func, arg);
-        event_add(event_again, NULL);
-    }
-    else if(interface.getRet() == INTER_CLOSE)
-    {
-        //TcpConnection 需要删除
-        delete connection;
-        conn->erase(fd);
+        connection->close();
+        thiz->delConntion(fd);
         thiz->loadMinus();
     }
     else
     {
-        //返回值处理，目前没想到还有什么情况会发生，待定。
-    }
-}
-
-static void write_func(int fd, short event, void *arg)
-{
-    ThreadLoop *thiz = (ThreadLoop*)arg;
-    ThreadLoop::ser_cb write_cb = thiz->getWriteCallBack();
-    event_base *base = thiz->getBase();
-    map<int, TcpConnection*> *conn = thiz->getConntion();
-    UserInterface interface((*conn)[fd]);
-    write_cb(&interface);
-
-    if(interface.getRet() == 1)
-    {
-        //返回值处理
+        message_cb(connection);
+        struct event *event_again = event_new(base, fd, event, message_func, arg);
+        event_add(event_again, NULL);
     }
 }
 
@@ -102,8 +81,7 @@ void ThreadLoop::loop()
 {
     //cout << "ThreadLoop::loop() is running" << endl;
     if(pipe_fd < 0) return;
-    if(read_cb == NULL) return;
-    if(write_cb == NULL) return;
+    if(message_cb == NULL) return;
     if(_base == NULL)
     {
         _base = event_base_new();

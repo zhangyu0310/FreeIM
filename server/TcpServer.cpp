@@ -6,7 +6,6 @@
  ************************************************************************/
 
 #include "TcpServer.h"
-#include "UserInterface.h"
 
 static void change_map(evutil_socket_t fd, short event, void *arg)
 {
@@ -17,7 +16,7 @@ static void change_map(evutil_socket_t fd, short event, void *arg)
     (*load_map)[fd] = atoi(tmp);
 }
 
-static void accept_cb(evutil_socket_t fd, short event, void *arg)
+static void accept_func(evutil_socket_t fd, short event, void *arg)
 {
     TcpServer *thiz = (TcpServer*)arg;
     map<int, int> *load_map = thiz->getMap();
@@ -36,10 +35,9 @@ static void accept_cb(evutil_socket_t fd, short event, void *arg)
     bzero(&cliadd, sizeof(cliadd));
     int cli_fd = accept(fd, (struct sockaddr*)&cliadd, &len);
     //cout << "accept is over" << endl;
-    TcpServer::ser_cb acc_cb = thiz->getAcceptCallBack();
-    TcpConnection conn(cli_fd);
-    UserInterface interface(&conn);
-    acc_cb(&interface);
+    //TcpServer::event_callback accept_cb = thiz->getAcceptCallBack();
+    //TcpConnection conn(cli_fd);
+    //accept_cb(&conn);
 
     char tmp[16] = {0};
     sprintf(tmp, "%d", cli_fd);
@@ -50,8 +48,7 @@ static void accept_cb(evutil_socket_t fd, short event, void *arg)
 int TcpServer::serverInit()
 {
     if(_base != NULL) return SERVER_EXIST;
-    if(read_cb == NULL) return CBFUNC_ERROR;
-    if(write_cb == NULL) return CBFUNC_ERROR;
+    if(accept_cb == NULL) return CBFUNC_ERROR;
 
     _base = event_base_new();
 
@@ -70,7 +67,7 @@ int TcpServer::serverInit()
         return BIND_ERROR;
     }
     
-    struct event *listen_event = event_new(_base, _sockfd, EV_READ|EV_PERSIST, accept_cb, this);
+    struct event *listen_event = event_new(_base, _sockfd, EV_READ|EV_PERSIST, accept_func, this);
     if(listen_event == NULL)
     {
         return EVENT_NEW_ERROR;
@@ -88,7 +85,7 @@ int TcpServer::serverInit()
         socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
         self_pair[i] = pair[0];
         threads_pair[i] = pair[1];
-        ThreadLoop *thread = new ThreadLoop(self_pair[i], read_cb, write_cb);
+        ThreadLoop *thread = new ThreadLoop(self_pair[i], accept_cb, message_cb, close_cb);
         _threads.push_back(thread);
         load_map[threads_pair[i]] = 0;
         struct event *pair_event = event_new(_base, threads_pair[i], EV_READ|EV_PERSIST, change_map, this);

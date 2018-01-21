@@ -10,39 +10,46 @@
 #include <pthread.h>
 #include <event.h>
 #include <map>
-#include "UserInterface.h"
+
 #include "TcpConnection.h"
 using std::map;
 
 class ThreadLoop
 {
 public:
-    typedef void(*event_cb)(int, short, void*);
-    typedef void(*ser_cb)(UserInterface*);
+    typedef void(*event_callback)(TcpConnection*);
 public:
-    ThreadLoop(const int pipe) : pipe_fd(pipe), _load(0),
-                        read_cb(NULL), write_cb(NULL), _base(NULL), thread_id(0) {}
-    ThreadLoop(const int pipe, ser_cb rcb, ser_cb wcb) : pipe_fd(pipe), _load(0),
-                        read_cb(rcb), write_cb(wcb), _base(NULL), thread_id(0) {}
+    ThreadLoop(const int pipe, event_callback accept, 
+               event_callback message, event_callback close) : 
+                pipe_fd(pipe), _load(0), accept_cb(accept), 
+                message_cb(message), close_cb(close), _base(NULL), thread_id(0) {}
 
     //~ThreadLoop();
-    void addReadCallBack(ser_cb cb) { read_cb = cb; }
-    void addWriteCallBack(ser_cb cb) { write_cb = cb; }
+
     struct event_base* getBase() { return _base; }
     int getPipe() { return pipe_fd; }
-    ser_cb getReadCallBack() { return read_cb; }
-    ser_cb getWriteCallBack() { return write_cb; }
+    event_callback getAcceptCallBack() { return accept_cb; }
+    event_callback getMessageCallBack() { return message_cb; }
+    event_callback getCloseCallBack() { return close_cb; }
+
     void loadPlus() { ++_load; }
     void loadMinus() { --_load; }
     int getLoad() { return _load; }
-    map<int, TcpConnection*>* getConntion() { return &_connection; }
+    TcpConnection* getConntion(int fd) { return _connection[fd]; }
+    void delConntion(int fd) 
+    {
+        delete _connection[fd];
+        _connection.erase(fd);
+    }
+    map<int, TcpConnection*>* getConntionMap() { return &_connection; }
     void loop();
 
 private:
     int pipe_fd;
     int _load;
-    ser_cb read_cb;
-    ser_cb write_cb;
+    event_callback accept_cb;
+    event_callback message_cb;
+    event_callback close_cb;
     struct event_base *_base;
     map<int, TcpConnection*> _connection;
     pthread_t thread_id;
