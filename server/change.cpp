@@ -21,7 +21,7 @@ void accept_cb(UserInterface *interface)
 {
     TcpConnection *conn = interface->getConnection();
     int cli_fd = interface->getFileDescriptor();
-    interface->recv();
+    conn->recv();
     string user_name = conn->getValueAsString("username");
     user_fd_map[user_name] = cli_fd;
 }
@@ -29,7 +29,7 @@ void read_cb(UserInterface *interface)
 {
     //cout << "read_cb" << endl;
     TcpConnection *conn = interface->getConnection();
-    if(interface->recv() <= 0)
+    if(conn->recv() <= 0)
     {
         interface->close();
         return;

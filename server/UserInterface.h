@@ -30,14 +30,6 @@ public:
         _write = true;
         _conn->setValue(val);
     }
-    void send()
-    {
-        _conn->send();
-    }
-    int recv()
-    {
-        return _conn->recv();
-    }
     void close() 
     {
         _conn->close();
