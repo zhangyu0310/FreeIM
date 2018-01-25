@@ -37,7 +37,7 @@ class TcpServer
 public:
     typedef void(*event_callback)(TcpConnection*);
 public:
-    TcpServer(int port, int threads) : _port(port), thread_num(threads), _sockfd(0),
+    TcpServer(const int port, const int threads) : _port(port), thread_num(threads), _sockfd(0),
                                     _base(NULL), accept_cb(NULL), message_cb(NULL), close_cb(NULL)
     {
         self_pair = new int[thread_num];
@@ -48,9 +48,9 @@ public:
         delete[] self_pair;
         delete[] threads_pair;
     }
-    void addAcceptCallBack(event_callback cb) { accept_cb = cb; }
-    void addMessageCallBack(event_callback cb) { message_cb = cb; }
-    void addCloseCallBack(event_callback cb) { close_cb = cb; }
+    void addAcceptCallBack(const event_callback cb) { accept_cb = cb; }
+    void addMessageCallBack(const event_callback cb) { message_cb = cb; }
+    void addCloseCallBack(const event_callback cb) { close_cb = cb; }
     //event_callback getAcceptCallBack() { return accept_cb; }
     struct event_base* getBase() { return _base; }
     map<int, int>* getMap() { return &load_map; }

@@ -38,6 +38,7 @@ int TcpConnection::recv()
 
 void TcpConnection::close()
 {
+    if(_closed == true) return;
     _closed = true;
     if(_loop == NULL) return;
 

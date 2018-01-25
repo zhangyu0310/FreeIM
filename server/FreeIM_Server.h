@@ -20,6 +20,10 @@ enum
     MSG_TYPE_CLOSE    = 5
 };
 
+void accept_func(TcpConnection*);
+void message_func(TcpConnection*);
+void close_func(TcpConnection*);
+
 class FreeIM
 {
 public:
@@ -33,9 +37,6 @@ public:
     void init();
     void run();
 private:
-    static void accept_func(TcpConnection*);
-    static void message_func(TcpConnection*);
-    static void close_func(TcpConnection*);
     TcpServer _server;
 };
 #endif

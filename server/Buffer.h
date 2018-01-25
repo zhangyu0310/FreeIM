@@ -15,8 +15,8 @@ class Buffer
 {
 public:
     Buffer() {}
-    Buffer(string str) : _buffer(str) {}
-    void setMessage(string message) { _buffer = message; }
+    Buffer(const string &str) : _buffer(str) {}
+    void setMessage(const string &message) { _buffer = message; }
     string getMessageAsString() { return _buffer; }
     const char* getMessageAsCstr() { return _buffer.c_str(); }
     int size() { return _buffer.size(); }

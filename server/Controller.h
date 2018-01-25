@@ -35,8 +35,8 @@ public:
 
     void process(TcpConnection *conn);
 private:
-    Controller();
-    Controller(const Controller&);
+    Controller() {}
+    Controller(const Controller&) {}
     map<int, View*> _control;
 };
 

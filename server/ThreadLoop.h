@@ -19,8 +19,8 @@ class ThreadLoop
 public:
     typedef void(*event_callback)(TcpConnection*);
 public:
-    ThreadLoop(const int pipe, event_callback accept, 
-               event_callback message, event_callback close) : 
+    ThreadLoop(const int pipe, const event_callback accept, 
+               const event_callback message, const event_callback close) : 
                 pipe_fd(pipe), _load(0), accept_cb(accept), 
                 message_cb(message), close_cb(close), _base(NULL), thread_id(0) {}
 
@@ -35,8 +35,8 @@ public:
     void loadPlus() { ++_load; }
     void loadMinus() { --_load; }
     int getLoad() { return _load; }
-    TcpConnection* getConntion(int fd) { return _connection[fd]; }
-    void delConntion(int fd) 
+    TcpConnection* getConntion(const int fd) { return _connection[fd]; }
+    void delConntion(const int fd) 
     {
         _connection.erase(fd);
     }
