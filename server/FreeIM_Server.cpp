@@ -9,8 +9,18 @@
 #include "Controller.h"
 #include "View_All.h"
 #include <iostream>
+#include <map>
+#include "DataBase.h"
 using std::cout;
 using std::endl;
+std::map<pthread_t, DataBase*> db;
+
+void threads_cb(ThreadLoop *loop)
+{
+    pthread_t pid = pthread_self();
+    DataBase *tmp = new DataBase;
+    db[pid] = tmp;
+}
 
 void accept_func(TcpConnection *conn)
 {
@@ -23,6 +33,16 @@ void message_func(TcpConnection *conn)
 }
 void close_func(TcpConnection *conn)
 {
+    pthread_t pid = pthread_self();
+    map<pthread_t, DataBase*>::iterator it = db.find(pid);
+    if(it != db.end())
+    {
+        it->second->UserLogout(conn->getConnfd());
+    }
+    else
+    {
+        exit(1);
+    }
     cout << "FD: " << conn->getConnfd() << " is closed!" << endl;
 }
 
@@ -31,8 +51,8 @@ void FreeIM::init()
     Controller &control = Controller::getInstance();
     control.registerView(MSG_TYPE_REGISTER, new VRegister);
     control.registerView(MSG_TYPE_LOGIN,    new VLogin);
-    //control.registerView(MSG_TYPE_P2PMES,   new VP2PMes);
-    //control.registerView(MSG_TYPE_CLOSE,    new VClose);
+    control.registerView(MSG_TYPE_P2PMES,   new VP2PMes);
+    control.registerView(MSG_TYPE_CLOSE,    new VClose);
     _server.serverInit();
 }
 

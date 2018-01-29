@@ -1,42 +1,39 @@
 /*************************************************************************
-	> File Name: View_Login.cpp
+	> File Name: View_P2PMes.cpp
 	> Author: 
 	> Mail: 
-	> Created Time: Thu 25 Jan 2018 08:45:56 PM CST
+	> Created Time: Sun 28 Jan 2018 09:11:14 AM CST
  ************************************************************************/
 
-#include "View_Login.h"
+#include "View_P2PMes.h"
 #include "TcpConnection.h"
 #include "ThreadLoop.h"
 #include "DataBase.h"
 #include <json/json.h>
 #include <string>
 #include <map>
+using std::map;
 using std::string;
 using Json::Value;
-using std::map;
 extern map<pthread_t, DataBase*> db;
 
-void VLogin::process(TcpConnection *conn, Value &val)
+void VP2PMes::process(TcpConnection *conn, Value &val)
 {
-    pthread_t pid = conn->getThreadLoop()->getThreadID();
+    pthread_t pid = pthread_self();
     map<pthread_t, DataBase*>::iterator it = db.find(pid);
-    DataBase *database;
-    if(it != db.end())
-    {
-        database = it->second;
-    }
-    else
+    if(it == db.end())
     {
         exit(1);
     }
+    DataBase *database = it->second;
 
-    string user_name = val["username"].asString();
-    string pw = val["password"].asString();
+    string from_name = val["from_name"].asString();
+    string to_name = val["to_name"].asString();
+    string mes = val["message"].asString();
 
     Value reply;
-    reply["type"] = 1;
-    int ret = database->UserLogin(user_name, pw, conn->getConnfd()); 
+    reply["type"] = 2;
+    int ret = database->P2PMessage(from_name, to_name, mes);
     reply["response"] = ret;
 
     conn->send(reply.toStyledString());

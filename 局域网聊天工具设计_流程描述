@@ -1,0 +1,66 @@
+局域网聊天工具设计，业务流程叙述
+用户名为 NULL 的用户默认注册完成，并且永久在线，用于标志发送连续消息发送完毕
+
+服务器：
+  Listen() Accept() 等待客户端消息
+
+客户端：
+  选择功能选择提示：注册、登录、退出
+  选择非退出选项则：
+  显示提示输入用户名、密码，输入完毕后：
+  Connect() 发送业务需求 ---> 业务1:注册 key:"type","username","password"
+                              业务2:登录 key:"type","username","password"
+  等待服务器相应业务
+
+服务器：
+  收到客户端业务请求，拆json包判断业务类型：
+                              业务1:注册 key:"type","username","password"
+                              业务2:登录 key:"type","username","password"
+  处理业务请求，并回应结果：json包 key:"response"
+                              业务1: 1(success),0(fail) //int
+                              业务2: 2(LOGIN_FAIL),3(NON_EXISTENT) //int
+                                     4(NAME_ERROR),5(PASSWORD_ERROR)
+                                     6(USER_IS_ONLINE)
+
+客户端：
+  处理服务器回复json包 key:"result":
+                              业务1:注册 肯定 提示成功，并重新显示功能选择提示
+                                         否定 提示失败，并重新显示功能选择提示
+                              业务2:登录 肯定 进入登录模式
+                                         否定 提示失败，并重新显示功能选择提示
+  登录模式：
+           接收离线消息，并消息提示，消息以以[username]="NULL"结束
+
+           显示功能选择提示：发送消息、广播、在线列表、退出
+           功能1:发送消息 key:"type","from_name","to_name","message"
+           功能2:广播     key:"type","username","message"
+           功能3:在线列表 key:"type"
+           功能4:退出     调用exit(0); 并打印告别提示
+
+           后台功能：消息提示、消息查看
+
+服务器：
+  用户登录成功后：
+                 修改用户状态为online
+                 发送所有离线消息 key:"username","message" 消息以以[username]="NULL"结束
+                 等待用户请求
+                 请求1:发送消息 key:"type","from_name","message"
+                 请求2:广播     key:"type","username","message"
+                 请求3:在线列表 key:"type","online"
+                 请求4:退出     recv(); 返回0，对应fd的用户设置离线，释放连接
+                 请求5:强制下线 key:"type"
+
+  回复key:"response" 尝试使用json结构功能
+
+
+  发送消息：根据username找出对应用户，发送消息（在线、离线调用同样API，仅实现区别）
+  广播：仅遍历在线列表，逐一发送消息（与发送消息API相同）
+  在线列表：仅遍历在线列表，回复在线用户名 key:"username" 以[username]="NULL"结束
+
+  MSG_TYPE_REGISTER = 0;
+  MSG_TYPE_LOGIN    = 1;
+  MSG_TYPE_P2PMES   = 2;
+  MSG_TYPE_GROUP    = 3;
+  MSG_TYPE_LIST     = 4;
+  MSG_TYPE_CLOSE    = 5;
+  MSG_TYPE_LOGOUT   = 6;

@@ -85,7 +85,7 @@ int TcpServer::serverInit()
         socketpair(AF_UNIX, SOCK_STREAM, 0, pair);
         self_pair[i] = pair[0];
         threads_pair[i] = pair[1];
-        ThreadLoop *thread = new ThreadLoop(self_pair[i], accept_cb, message_cb, close_cb);
+        ThreadLoop *thread = new ThreadLoop(self_pair[i], threads_cb, accept_cb, message_cb, close_cb);
         _threads.push_back(thread);
         load_map[threads_pair[i]] = 0;
         struct event *pair_event = event_new(_base, threads_pair[i], EV_READ|EV_PERSIST, change_map, this);

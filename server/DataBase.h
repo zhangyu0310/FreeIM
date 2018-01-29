@@ -17,7 +17,9 @@
 #define NAME_ERROR         4
 #define PASSWORD_ERROR     5
 #define USER_IS_ONLINE     6
+#define CLOSE_FAIL         7
 
+const char message_store[] = "/root/tulun/project/FreeIM/message_store/";
 
 class DataBase
 {
@@ -31,8 +33,9 @@ public:
     }
     int registerUser(const string &name, const string &pw);
     int UserLogin(const string &name, const string &pw, const int fd);
+    int P2PMessage(const string &from_name, const string &to_name, const string &mes);
+    int UserLogout(const int fd);
 private:
-    DataBase(const DataBase&);
     SQL _database;
 };
 

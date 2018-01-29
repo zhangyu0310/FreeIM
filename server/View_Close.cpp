@@ -1,11 +1,11 @@
 /*************************************************************************
-	> File Name: View_Login.cpp
+	> File Name: View_Close.cpp
 	> Author: 
 	> Mail: 
-	> Created Time: Thu 25 Jan 2018 08:45:56 PM CST
+	> Created Time: Mon 29 Jan 2018 03:56:27 PM CST
  ************************************************************************/
 
-#include "View_Login.h"
+#include "View_Close.h"
 #include "TcpConnection.h"
 #include "ThreadLoop.h"
 #include "DataBase.h"
@@ -17,9 +17,9 @@ using Json::Value;
 using std::map;
 extern map<pthread_t, DataBase*> db;
 
-void VLogin::process(TcpConnection *conn, Value &val)
+void VClose::process(TcpConnection *conn, Value& val)
 {
-    pthread_t pid = conn->getThreadLoop()->getThreadID();
+    pthread_t pid = pthread_self();
     map<pthread_t, DataBase*>::iterator it = db.find(pid);
     DataBase *database;
     if(it != db.end())
@@ -31,13 +31,6 @@ void VLogin::process(TcpConnection *conn, Value &val)
         exit(1);
     }
 
-    string user_name = val["username"].asString();
-    string pw = val["password"].asString();
-
-    Value reply;
-    reply["type"] = 1;
-    int ret = database->UserLogin(user_name, pw, conn->getConnfd()); 
-    reply["response"] = ret;
-
-    conn->send(reply.toStyledString());
+    int ret = database->UserLogout(conn->getConnfd());
+    conn->close();
 }

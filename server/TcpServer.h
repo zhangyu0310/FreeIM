@@ -36,9 +36,10 @@ class TcpServer
 {
 public:
     typedef void(*event_callback)(TcpConnection*);
+    typedef void(*threads_init_callback)(ThreadLoop*);
 public:
     TcpServer(const int port, const int threads) : _port(port), thread_num(threads), _sockfd(0),
-                                    _base(NULL), accept_cb(NULL), message_cb(NULL), close_cb(NULL)
+                                    _base(NULL), threads_cb(NULL), accept_cb(NULL), message_cb(NULL), close_cb(NULL)
     {
         self_pair = new int[thread_num];
         threads_pair = new int[thread_num];
@@ -48,6 +49,7 @@ public:
         delete[] self_pair;
         delete[] threads_pair;
     }
+    void addThreadInitCallBack(const threads_init_callback cb) { threads_cb = cb; }
     void addAcceptCallBack(const event_callback cb) { accept_cb = cb; }
     void addMessageCallBack(const event_callback cb) { message_cb = cb; }
     void addCloseCallBack(const event_callback cb) { close_cb = cb; }
@@ -62,6 +64,7 @@ private:
     int thread_num;
     int _sockfd;
     struct event_base *_base;
+    threads_init_callback threads_cb;
     event_callback accept_cb;
     event_callback message_cb;
     event_callback close_cb;

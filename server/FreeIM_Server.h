@@ -9,6 +9,7 @@
 #define _FREEIM_SERVER_H
 #include "TcpServer.h"
 #include "TcpConnection.h"
+#include "ThreadLoop.h"
 
 enum
 {
@@ -17,9 +18,11 @@ enum
     MSG_TYPE_P2PMES   = 2,
     MSG_TYPE_GROUP    = 3,
     MSG_TYPE_LIST     = 4,
-    MSG_TYPE_CLOSE    = 5
+    MSG_TYPE_CLOSE    = 5,
+    MSG_TYPE_LOGOUT   = 6
 };
 
+void threads_cb(ThreadLoop*);
 void accept_func(TcpConnection*);
 void message_func(TcpConnection*);
 void close_func(TcpConnection*);
@@ -29,6 +32,7 @@ class FreeIM
 public:
     FreeIM(int port, int threads) : _server(port, threads)
     {
+        _server.addThreadInitCallBack(threads_cb);
         _server.addAcceptCallBack(accept_func);
         _server.addMessageCallBack(message_func);
         _server.addCloseCallBack(close_func);

@@ -43,7 +43,12 @@ static void listen_cb(int fd, short event, void *arg)
 
 static void* thread_func(void *arg)
 {
-    ThreadLoop *thiz = (ThreadLoop*)arg; 
+    ThreadLoop *thiz = (ThreadLoop*)arg;
+    ThreadLoop::threads_init_callback threads_cb = thiz->getThreadsInitCallBack();
+    if(threads_cb != NULL)
+    {
+        threads_cb(thiz);
+    }
     struct event *pipe_event = event_new(thiz->getBase(), 
                                         thiz->getPipe(), 
                                         EV_READ|EV_PERSIST, 

@@ -5,16 +5,16 @@
 	> Created Time: Wed 24 Jan 2018 08:56:10 PM CST
  ************************************************************************/
 
-#include <iostream>
-#include <string>
+#include <map>
+#include <pthread.h>
 #include "FreeIM_Server.h"
 #include "DataBase.h"
 using namespace std;
-DataBase db;
+#define THREADS_NUM 3
 
 int main()
 {
-    FreeIM IM(1219, 3);
+    FreeIM IM(1219, THREADS_NUM);
     IM.init();
     IM.run();
 }

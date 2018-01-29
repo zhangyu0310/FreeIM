@@ -8,19 +8,35 @@
 #include "View_Register.h"
 #include "TcpConnection.h"
 #include "DataBase.h"
+#include "ThreadLoop.h"
+#include <map>
 #include <json/json.h>
 #include <string>
 using std::string;
+using std::map;
 using Json::Value;
-extern DataBase db;
+extern map<pthread_t, DataBase*> db;
 
 void VRegister::process(TcpConnection *conn, Value &val)
 {
+    pthread_t pid = conn->getThreadLoop()->getThreadID();
+    map<pthread_t, DataBase*>::iterator it = db.find(pid);
+    DataBase *database;
+    if(it != db.end())
+    {
+        database = it->second;
+    }
+    else
+    {
+        exit(1);
+    }
+
     string user_name = val["username"].asString();
     string pw = val["password"].asString();
 
     Value reply;
-    if(db.registerUser(user_name, pw) == REGISTER_FAIL)
+    reply["type"] = 0;
+    if(database->registerUser(user_name, pw) == REGISTER_FAIL)
     {
         reply["response"] = 0;
     }
